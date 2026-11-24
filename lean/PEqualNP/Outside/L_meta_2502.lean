@@ -83,6 +83,9 @@ lemma wiresFrom_length (gs : List Gate) (w : List Bool) :
     simp only [List.length_append, List.length_cons, List.length_nil]
     omega
 
+lemma getD_append_right_single {α : Type} (l : List α) (x d : α) :
+    (l ++ [x]).getD l.length d = x := by simp
+
 lemma SymVal_eval_append_ok (v : List Bool) (g : Gate) (sv : SymVal)
     (h : match sv with | SymVal.wire k => k < v.length | _ => True) :
     sv.eval (v ++ [g.op.eval (g.inputs.map fun i => v.getD i false)]) = sv.eval v := by
@@ -156,7 +159,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
       | nil =>
         simp only [step, h_op, h_in]
         refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
-        · simp [List.getD_append _ _ _ _ (by omega), h6]
+        · rw [List.getD_append st.2 _ SymVal.cFalse 6 (by omega)]; exact h6
         · intro sv hsv
           simp only [List.mem_append, List.mem_singleton] at hsv
           rcases hsv with hsv | rfl
@@ -167,7 +170,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
         cases t with
         | nil =>
           simp only [step, h_op, h_in]
-          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => rfl, by simp⟩
+          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => by simp, by simp⟩
           · rw [List.getD_append _ _ _ _ (by omega)]; exact h6
           · intro sv hsv
             simp only [List.mem_append, List.mem_singleton] at hsv
@@ -183,7 +186,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
             cases ha : st.2.getD a SymVal.cFalse <;> cases hb : st.2.getD b SymVal.cFalse <;>
               simp only []
             all_goals try (
-              refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => rfl, by simp⟩
+              refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => by simp, by simp⟩
               · rw [List.getD_append _ _ _ _ (by omega)]; exact h6
               · intro sv hsv
                 simp only [List.mem_append, List.mem_singleton] at hsv
@@ -192,7 +195,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
                 · first | trivial | (have := hget a; rw [ha] at this; exact this) | (have := hget b; rw [hb] at this; exact this))
             · refine ⟨⟨?_, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
               · intro g' hg'
-                simp only [List.mem_append, List.mem_singleton] at hg'
+                simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hg'
                 rcases hg' with hg' | rfl
                 · exact hfan g' hg'
                 · exact ⟨by simp, by simp⟩
@@ -201,10 +204,10 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
                 simp only [List.mem_append, List.mem_singleton] at hsv
                 rcases hsv with hsv | rfl
                 · have := hwires sv hsv
-                  cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢; omega
+                  cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢
                 · simp; omega
               · exfalso
-                have hab : a = 6 ∨ b = 6 := hx1_and_or a b (by cases g; simp_all) (Or.inl rfl)
+                have hab : a = 6 ∨ b = 6 := hx1_and_or a b (by cases g; simp_all) (Or.inl h_op)
                 rcases hab with rfl | rfl
                 · rw [h6] at ha; cases ha
                 · rw [h6] at hb; cases hb
@@ -220,7 +223,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
       | nil =>
         simp only [step, h_op, h_in]
         refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
-        · simp [List.getD_append _ _ _ _ (by omega), h6]
+        · rw [List.getD_append st.2 _ SymVal.cFalse 6 (by omega)]; exact h6
         · intro sv hsv
           simp only [List.mem_append, List.mem_singleton] at hsv
           rcases hsv with hsv | rfl
@@ -231,7 +234,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
         cases t with
         | nil =>
           simp only [step, h_op, h_in]
-          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => rfl, by simp⟩
+          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => by simp, by simp⟩
           · rw [List.getD_append _ _ _ _ (by omega)]; exact h6
           · intro sv hsv
             simp only [List.mem_append, List.mem_singleton] at hsv
@@ -245,7 +248,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
             cases ha : st.2.getD a SymVal.cFalse <;> cases hb : st.2.getD b SymVal.cFalse <;>
               simp only []
             all_goals try (
-              refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => rfl, by simp⟩
+              refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => by simp, by simp⟩
               · rw [List.getD_append _ _ _ _ (by omega)]; exact h6
               · intro sv hsv
                 simp only [List.mem_append, List.mem_singleton] at hsv
@@ -254,7 +257,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
                 · first | trivial | (have := hget a; rw [ha] at this; exact this) | (have := hget b; rw [hb] at this; exact this))
             · refine ⟨⟨?_, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
               · intro g' hg'
-                simp only [List.mem_append, List.mem_singleton] at hg'
+                simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hg'
                 rcases hg' with hg' | rfl
                 · exact hfan g' hg'
                 · exact ⟨by simp, by simp⟩
@@ -263,10 +266,10 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
                 simp only [List.mem_append, List.mem_singleton] at hsv
                 rcases hsv with hsv | rfl
                 · have := hwires sv hsv
-                  cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢; omega
+                  cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢
                 · simp; omega
               · exfalso
-                have hab : a = 6 ∨ b = 6 := hx1_and_or a b (by cases g; simp_all) (Or.inr rfl)
+                have hab : a = 6 ∨ b = 6 := hx1_and_or a b (by cases g; simp_all) (Or.inr h_op)
                 rcases hab with rfl | rfl
                 · rw [h6] at ha; cases ha
                 · rw [h6] at hb; cases hb
@@ -283,7 +286,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
       | nil =>
         simp only [step, h_op, h_in]
         refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
-        · simp [List.getD_append _ _ _ _ (by omega), h6]
+        · rw [List.getD_append st.2 _ SymVal.cFalse 6 (by omega)]; exact h6
         · intro sv hsv
           simp only [List.mem_append, List.mem_singleton] at hsv
           rcases hsv with hsv | rfl
@@ -294,7 +297,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
         simp only [step, h_op, h_in]
         cases ha : st.2.getD a SymVal.cFalse <;> simp only []
         all_goals try (
-          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => rfl, by simp⟩
+          refine ⟨⟨hfan, by simp; omega, ?_, ?_⟩, by simp, fun _ => by simp, by simp⟩
           · rw [List.getD_append _ _ _ _ (by omega)]; exact h6
           · intro sv hsv
             simp only [List.mem_append, List.mem_singleton] at hsv
@@ -303,7 +306,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
             · trivial)
         · refine ⟨⟨?_, by simp; omega, ?_, ?_⟩, by simp, fun hx => ?_, by simp⟩
           · intro g' hg'
-            simp only [List.mem_append, List.mem_singleton] at hg'
+            simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hg'
             rcases hg' with hg' | rfl
             · exact hfan g' hg'
             · exact ⟨by simp, by simp⟩
@@ -312,7 +315,7 @@ lemma step_inv (st : List Gate × List SymVal) (g : Gate) (hst : StateInv st) (h
             simp only [List.mem_append, List.mem_singleton] at hsv
             rcases hsv with hsv | rfl
             · have := hwires sv hsv
-              cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢; omega
+              cases sv with | cFalse => trivial | cTrue => trivial | wire k => simp at this ⊢
             · simp; omega
           · exfalso
             cases t with
@@ -369,7 +372,9 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
     · by_cases hieq : i = st.2.length
       · subst hieq
         have hw0' : st.2.length = w0.length := hw0.symm
-        simp [hw0', hsv]
+        rw [getD_append_right_single]
+        conv_rhs => rw [hw0', getD_append_right_single]
+        exact hsv
       · have h1 : st.2.length < i := by omega
         rw [List.getD_eq_default _ _ (by simp; omega), List.getD_eq_default _ _ (by simp; omega)]
         rfl
@@ -379,17 +384,20 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
       cases h_in : g.inputs with
       | nil =>
         simp only [step, h_op, h_in]
-        exact hcommon st.1 SymVal.cTrue (by simp [GateOp.eval]) (Or.inl rfl)
+        rw [h_op, h_in] at hcommon
+        exact hcommon st.1 SymVal.cTrue (by simp [GateOp.eval, SymVal.eval]) (Or.inl rfl)
       | cons a t =>
         cases t with
         | nil =>
           simp only [step, h_op, h_in]
+          rw [h_op, h_in] at hcommon
           exact hcommon st.1 (st.2.getD a SymVal.cFalse)
-            (by simp [GateOp.eval, heval a]) (Or.inl rfl)
+            (by simp [GateOp.eval, SymVal.eval, heval a]) (Or.inl rfl)
         | cons b t' =>
           cases t' with
           | nil =>
             simp only [step, h_op, h_in]
+            rw [h_op, h_in] at hcommon
             have hae := heval a
             have hbe := heval b
             cases ha : st.2.getD a SymVal.cFalse <;> cases hb : st.2.getD b SymVal.cFalse <;>
@@ -401,9 +409,11 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
               rfl)
             · refine hcommon (st.1 ++ [⟨GateOp.and, [_, _]⟩]) _ ?_ (Or.inr ⟨_, rfl⟩)
               rw [wiresFrom_append, wiresFrom, List.foldl_cons, List.foldl_nil]
-              simp only [SymVal.eval, wiresFrom_length, List.length_ofFn]
-              rw [List.getD_append_right (by omega)]
-              simp only [Nat.sub_self, List.getD_cons_zero, GateOp.eval, List.map_cons, List.map_nil,
+              simp only [SymVal.eval]
+              have hlen_w : (wiresFrom st.1 (List.ofFn x)).length = 8 + st.1.length := by
+                rw [wiresFrom_length, List.length_ofFn]; omega
+              rw [← hlen_w, getD_append_right_single]
+              simp only [GateOp.eval, List.map_cons, List.map_nil,
                 List.all_cons, List.all_nil, id_eq, Bool.and_true]
               rw [← hae, ← hbe, ha, hb]
               rfl
@@ -417,17 +427,20 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
       cases h_in : g.inputs with
       | nil =>
         simp only [step, h_op, h_in]
-        exact hcommon st.1 SymVal.cFalse (by simp [GateOp.eval]) (Or.inl rfl)
+        rw [h_op, h_in] at hcommon
+        exact hcommon st.1 SymVal.cFalse (by simp [GateOp.eval, SymVal.eval]) (Or.inl rfl)
       | cons a t =>
         cases t with
         | nil =>
           simp only [step, h_op, h_in]
+          rw [h_op, h_in] at hcommon
           exact hcommon st.1 (st.2.getD a SymVal.cFalse)
-            (by simp [GateOp.eval, heval a]) (Or.inl rfl)
+            (by simp [GateOp.eval, SymVal.eval, heval a]) (Or.inl rfl)
         | cons b t' =>
           cases t' with
           | nil =>
             simp only [step, h_op, h_in]
+            rw [h_op, h_in] at hcommon
             have hae := heval a
             have hbe := heval b
             cases ha : st.2.getD a SymVal.cFalse <;> cases hb : st.2.getD b SymVal.cFalse <;>
@@ -439,9 +452,11 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
               rfl)
             · refine hcommon (st.1 ++ [⟨GateOp.or, [_, _]⟩]) _ ?_ (Or.inr ⟨_, rfl⟩)
               rw [wiresFrom_append, wiresFrom, List.foldl_cons, List.foldl_nil]
-              simp only [SymVal.eval, wiresFrom_length, List.length_ofFn]
-              rw [List.getD_append_right (by omega)]
-              simp only [Nat.sub_self, List.getD_cons_zero, GateOp.eval, List.map_cons, List.map_nil,
+              simp only [SymVal.eval]
+              have hlen_w : (wiresFrom st.1 (List.ofFn x)).length = 8 + st.1.length := by
+                rw [wiresFrom_length, List.length_ofFn]; omega
+              rw [← hlen_w, getD_append_right_single]
+              simp only [GateOp.eval, List.map_cons, List.map_nil,
                 List.any_cons, List.any_nil, id_eq, Bool.or_false]
               rw [← hae, ← hbe, ha, hb]
               rfl
@@ -455,7 +470,8 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
       cases h_in : g.inputs with
       | nil =>
         simp only [step, h_op, h_in]
-        exact hcommon st.1 SymVal.cTrue (by simp [GateOp.eval, h_op, h_in]) (Or.inl rfl)
+        rw [h_op, h_in] at hcommon
+        exact hcommon st.1 SymVal.cTrue (by simp [GateOp.eval, SymVal.eval, h_op, h_in]) (Or.inl rfl)
       | cons a t =>
         simp only [step, h_op, h_in]
         rw [h_op, h_in] at hcommon
@@ -471,8 +487,10 @@ lemma step_eval (st : List Gate × List SymVal) (g : Gate) (x : Fin 8 → Bool) 
           simp only [SymVal.eval]
           have hlen_w : (wiresFrom st.1 (List.ofFn x)).length = 8 + st.1.length := by
             rw [wiresFrom_length, List.length_ofFn]; omega
-          rw [← hlen_w]
-          simp [GateOp.eval, ← hae, ha]
+          rw [← hlen_w, getD_append_right_single]
+          dsimp only [GateOp.eval, List.map_cons, List.headD_cons]
+          rw [← hae, ha]
+          rfl
     | and => simp [h_op] at hop_not
     | or => simp [h_op] at hop_not
     | mod m => simp [h_op] at hop_not
